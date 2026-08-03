@@ -1,0 +1,76 @@
+type Campaign @entity {
+  id: ID!                          # campaign contract address
+  owner: Bytes!
+  goal: BigInt!
+  deadline: BigInt!
+  totalRaised: BigInt!
+  state: Int!                      # 0=Fundraising 1=Successful 2=Expired 3=Withdrawn
+  title: String
+  description: String
+  imageUrl: String
+  createdAt: BigInt!               # block.timestamp of creation
+  createdTx: Bytes!                # creation transaction hash
+  donations: [Donation!]! @derivedFrom(field: "campaign")
+  stateChanges: [CampaignStateChange!]! @derivedFrom(field: "campaign")
+  donationCount: Int!
+}
+
+type Donation @entity {
+  id: ID!                          # tx hash + log index
+  campaign: Campaign!
+  donor: Bytes!
+  amount: BigInt!
+  totalRaisedAfter: BigInt!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type CampaignStateChange @entity {
+  id: ID!                          # tx hash + log index
+  campaign: Campaign!
+  newState: Int!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type StakeAction @entity {
+  id: ID!                          # tx hash + log index
+  user: Bytes!
+  type: StakeType!                 # Stake or Unstake
+  amount: BigInt!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type RewardClaim @entity {
+  id: ID!                          # tx hash + log index
+  user: Bytes!
+  amount: BigInt!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type UserStats @entity {
+  id: ID!                          # user address
+  totalDonated: BigInt!
+  totalStaked: BigInt!
+  totalUnstaked: BigInt!
+  totalRewardsClaimed: BigInt!
+  campaignCount: Int!              # number of campaigns created
+  donationCount: Int!
+  stakeCount: Int!
+}
+
+type GlobalStats @entity {
+  id: ID!                          # "global"
+  totalCampaigns: Int!
+  totalDonations: Int!
+  totalDonatedEth: BigInt!
+  totalStaked: BigInt!
+  totalRewardsClaimed: BigInt!
+}
+
+enum StakeType {
+  Stake
+  Unstake
+}

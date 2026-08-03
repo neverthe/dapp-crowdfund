@@ -1,0 +1,90 @@
+specVersion: 1.2.0
+schema:
+  file: ./schema.graphql
+indexerHints:
+  prune: auto
+
+dataSources:
+  # ── 众筹工厂 ──
+  - kind: ethereum
+    name: CrowdfundFactory
+    network: sepolia
+    source:
+      address: "0x64b63cdd92245c99b2d511430addc0de8c74b4d0"
+      abi: CrowdfundFactory
+      startBlock: 11380621
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Campaign
+        - UserStats
+        - GlobalStats
+      abis:
+        - name: CrowdfundFactory
+          file: ./abis/CrowdfundFactory.json
+        - name: CrowdfundCampaign
+          file: ./abis/CrowdfundCampaign.json
+      eventHandlers:
+        - event: CampaignCreated(indexed address,indexed address,uint256,uint256)
+          handler: handleCampaignCreated
+      file: ./src/crowdfund.ts
+
+  # ── Staking 池 ──
+  - kind: ethereum
+    name: StakingPool
+    network: sepolia
+    source:
+      address: "0xd21afae87398e7f16d6bcb28bfa38e93c7f3f8cb"
+      abi: StakingPool
+      startBlock: 11380793
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - StakeAction
+        - RewardClaim
+        - UserStats
+        - GlobalStats
+      abis:
+        - name: StakingPool
+          file: ./abis/StakingPool.json
+      eventHandlers:
+        - event: Staked(indexed address,uint256)
+          handler: handleStaked
+        - event: Unstaked(indexed address,uint256)
+          handler: handleUnstaked
+        - event: RewardsClaimed(indexed address,uint256)
+          handler: handleRewardsClaimed
+      file: ./src/staking.ts
+
+templates:
+  # ── 动态创建的 Campaign 合约 ──
+  - kind: ethereum
+    name: CrowdfundCampaign
+    network: sepolia
+    source:
+      abi: CrowdfundCampaign
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Campaign
+        - Donation
+        - CampaignStateChange
+      abis:
+        - name: CrowdfundCampaign
+          file: ./abis/CrowdfundCampaign.json
+      eventHandlers:
+        - event: Donated(indexed address,uint256,uint256)
+          handler: handleDonated
+        - event: Withdrawn(indexed address,uint256)
+          handler: handleWithdrawn
+        - event: Refunded(indexed address,uint256)
+          handler: handleRefunded
+        - event: StateChanged(uint8)
+          handler: handleStateChanged
+      file: ./src/campaign.ts
