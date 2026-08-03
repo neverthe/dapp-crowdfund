@@ -1,18 +1,10 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { ConnectButton } from "@/components/ConnectButton";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { NavLinks } from "@/components/NavLinks";
+import { ChainGuard } from "@/components/ChainGuard";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const metadata: Metadata = {
   title: "Crowdfund DApp",
@@ -25,11 +17,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
+    <html lang="zh-CN" suppressHydrationWarning>
+      <body className="min-h-screen bg-[var(--background)] text-[var(--foreground)] antialiased font-sans">
         <Providers>
-          <Header />
-          <main className="max-w-6xl mx-auto px-4 py-8">{children}</main>
+          <ChainGuard>
+            <Header />
+            <main className="max-w-6xl mx-auto px-4 py-8">{children}</main>
+          </ChainGuard>
         </Providers>
       </body>
     </html>
@@ -38,12 +32,20 @@ export default function RootLayout({
 
 function Header() {
   return (
-    <header className="bg-white shadow-sm border-b sticky top-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <a href="/" className="text-xl font-bold text-indigo-600">
-          Crowdfund
-        </a>
-        <ConnectButton />
+    <header className="bg-[var(--card)] border-b border-[var(--card-border)] sticky top-0 z-50">
+      <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-6 min-w-0">
+          <a href="/" className="text-xl font-bold text-indigo-600 shrink-0">
+            Crowdfund
+          </a>
+          <nav className="hidden md:flex items-center gap-1 text-sm overflow-x-auto">
+            <NavLinks />
+          </nav>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <ThemeToggle />
+          <ConnectButton />
+        </div>
       </div>
     </header>
   );
