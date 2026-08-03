@@ -126,8 +126,8 @@ export default function CampaignDetail() {
   const canDonate = currentState === 0 && !isPastDeadline
   const canWithdraw = isOwner && currentState === 1
   // 退款：合约要求 state=Fundraising(0) + 已过截止日期 + 有捐赠记录，直接退无需审核
-  const canRefund = isConnected && currentState === 0 && isPastDeadline && contribution !== undefined && contribution > 0n
-  const displayStateLabel = currentState === 0 && isPastDeadline ? '已截止 · 可退款' : stateInfo.label
+  const canRefund = isConnected && (currentState === 0 || currentState === 2) && isPastDeadline && contribution !== undefined && contribution > 0n
+  const displayStateLabel = (currentState === 0 || currentState === 2) && isPastDeadline ? '已过期 · 可退款' : stateInfo.label
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -175,7 +175,7 @@ export default function CampaignDetail() {
               <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${stateInfo.color} ${stateInfo.bg}`}>
                 {displayStateLabel}
               </span>
-              {currentState === 0 && isPastDeadline && (
+              {(currentState === 0 || currentState === 2) && isPastDeadline && (
                 <span className="text-xs text-gray-400 ml-1">(智能合约自动处理退款)</span>
               )}
             </span>

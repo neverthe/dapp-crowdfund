@@ -51,11 +51,11 @@
 
 | 合约 | 地址 |
 |---|---|
-| CrowdToken (ERC20) | `0xb7b78772e15d0d6a4dc28ada32c0fb80922b6758` |
-| CrowdfundFactory | `0x64b63cdd92245c99b2d511430addc0de8c74b4d0` |
-| StakingPool | `0xd21afae87398e7f16d6bcb28bfa38e93c7f3f8cb` |
+| CrowdToken (ERC20) | `0xeca866861030cf9e5c717675024d3fb770576fe9` |
+| CrowdfundFactory | `0x8fe3846c7227c45d4b893be3b3c07e9de971a4cd` |
+| StakingPool | `0x385c8bb028dc3582ebc8b4f72532da2dfcce68e1` |
 
-- 子图：[crowdfund-staking-sepolia v0.0.3](https://api.studio.thegraph.com/query/1757085/crowdfund-staking-sepolia/v0.0.3)
+- 子图：[crowdfund-staking-sepolia v0.0.4](https://api.studio.thegraph.com/query/1757085/crowdfund-staking-sepolia/v0.0.4)
 - 可在 [Sepolia Etherscan](https://sepolia.etherscan.io/) 输入合约地址查看链上数据
 
 ## 快速开始

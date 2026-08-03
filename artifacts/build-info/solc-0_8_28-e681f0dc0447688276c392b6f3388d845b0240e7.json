@@ -1,0 +1,46 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-e681f0dc0447688276c392b6f3388d845b0240e7",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "compilerType": "solc",
+  "userSourceNameMap": {
+    "contracts/CrowdfundCampaign.sol": "project/contracts/CrowdfundCampaign.sol",
+    "contracts/CrowdfundFactory.sol": "project/contracts/CrowdfundFactory.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode.linkReferences",
+            "evm.bytecode.object",
+            "evm.bytecode.opcodes",
+            "evm.bytecode.sourceMap",
+            "evm.deployedBytecode.immutableReferences",
+            "evm.deployedBytecode.linkReferences",
+            "evm.deployedBytecode.object",
+            "evm.deployedBytecode.opcodes",
+            "evm.deployedBytecode.sourceMap",
+            "evm.methodIdentifiers"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/CrowdfundCampaign.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.28;\n\n/**\n * 众筹状态机\n */\nenum CampaignState {\n    Fundraising,  // 筹款中\n    Successful,   // 成功（已达目标但未提款）\n    Expired,      // 过期（未达目标，可退款）\n    Withdrawn     // 已提款\n}\n\n/**\n * 单个众筹项目\n */\ncontract CrowdfundCampaign {\n    address public owner;\n    uint256 public goal;\n    uint256 public deadline;\n    uint256 public totalRaised;\n    CampaignState public state;\n    \n    string public title;\n    string public description;\n    string public imageUrl;\n\n    mapping(address => uint256) public contributions;\n    address[] public contributors;\n// 事件（Event）定义。这些事件让你的 DApp 能够实时响应合约变化，为用户提供良好的交互体验\n    event Donated(address indexed donor, uint256 amount, uint256 totalRaised);\n    event Withdrawn(address indexed owner, uint256 amount);\n    event Refunded(address indexed donor, uint256 amount);\n    //  状态发生改变时（在 donate、withdraw、checkIfExpired 中）\n    event StateChanged(CampaignState newState);\n// 函数修饰器（Function Modifier），用于在函数执行前进行状态检查。\n// 权限控制（提款等管理操作）\n    modifier onlyOwner() {\n        require(msg.sender == owner, \"Not campaign owner\");\n        _;\n    }\n// \t状态机控制（不同状态允许不同操作）。检查当前状态是否等于传入的状态。\n    modifier inState(CampaignState _state) {\n        require(state == _state, \"Invalid campaign state\");\n        _;\n    }\n\n    constructor(\n        address _owner,\n        uint256 _goal,\n        uint256 _durationDays,\n        string memory _title,\n        string memory _description,\n        string memory _imageUrl\n    ) {\n        owner = _owner;\n        goal = _goal;\n        deadline = block.timestamp + (_durationDays * 1 days);\n        title = _title;\n        description = _description;\n        imageUrl = _imageUrl;\n        state = CampaignState.Fundraising;\n    }\n\n    /**\n     * 捐赠 ETH\n     */\n    // inState 修饰器：Fundraising确保当前状态是筹款中\n    function donate() external payable inState(CampaignState.Fundraising) {\n        require(block.timestamp < deadline, \"Campaign expired\");\n        require(msg.value > 0, \"Donation must be > 0\");\n        // 如果为 0，说明是首次捐赠，将地址加入 contributors 数组。方便统计捐赠人数\n        if (contributions[msg.sender] == 0) {\n            contributors.push(msg.sender);\n        }\n        contributions[msg.sender] += msg.value;\n        totalRaised += msg.value;\n        // 触发 Donated 事件，通知外部监听者\n        emit Donated(msg.sender, msg.value, totalRaised);\n\n        // 达成目标自动切换状态\n        if (totalRaised >= goal) {\n            state = CampaignState.Successful;\n            emit StateChanged(CampaignState.Successful);\n        }\n    }\n\n    /**\n     * 创建者提取资金（仅在 Successful 状态）\n     */\n    function withdraw() external onlyOwner inState(CampaignState.Successful) {\n        // 先改状态，再转账。即使转账过程中发生重入攻击，状态已变，无法再次提款\n        state = CampaignState.Withdrawn;\n        //从 storage仅仅 读取 1 次，存入 memory，节省Gas\n        uint256 amount = totalRaised;\n        //  Solidity 中最安全的转账方式\n        // (\"\") 空数据参数，表示只转账不调用函数\n        // .call() 返回两个值。第一个：转账是否成功（bool）第二个：返回数据（这里为空，所以用 () 忽略）\n        // 如果直接用totalRaised 下面emit Withdrawn(owner, totalRaised); 还会再 从 storage 读取一次\n        (bool success, ) = owner.call{value: amount}(\"\");\n        // require 失败 → 触发 REVERT 操作码,回滚整个交易。 如果 success == false：\n        //交易立即停止执行,所有状态变更撤销,Gas 退还（扣除已使用的部分）,返回错误信息 \"Withdraw failed\"\n        require(success, \"Withdraw failed\");\n\n        emit Withdrawn(owner, amount);\n        emit StateChanged(CampaignState.Withdrawn);\n    }\n\n    /**\n     * 过期后捐赠者退款\n     */\n    //  活动过期后checkIfExpired() 会将状态变为 Expired,refund() 就无法调用了（因为状态检查是 Fundraising）\n//    修复方案 允许多个状态 修复方案\n    // require(state == CampaignState.Fundraising || state == CampaignState.Expired, \"Invalid campaign state\");\n//     前端没有调用 checkIfExpired() state 始终是 Fundraising (0) refund() 始终可用，用户能正常退款\n    // 但创建者手动调用、区块浏览器调用、其他合约调用一旦触发，所有用户的退款都永久失效\n    // 已按方案 1 修复：同时允许 Fundraising(0) 和 Expired(2) 状态退款，checkIfExpired() 被调用也不会卡死资金\n    function refund() external {\n        require(state == CampaignState.Fundraising || state == CampaignState.Expired, \"Invalid campaign state\");\n        // 只有在过期后才能退款（防止用户在活动进行中退款）\n        require(block.timestamp >= deadline, \"Campaign not expired yet\");\n        // 如果为 0，说明没有捐赠过，无法退款。防止恶意用户调用浪费 Gas\n        require(contributions[msg.sender] > 0, \"No contribution\");\n        // 重入攻击防护：先改状态，后转账（checks-effects-interactions）\n        // contributions[msg.sender] = 0;  // ① 先清零\n        // (bool success, ) = msg.sender.call{value: amount}(\"\");  // ② 后转账\n        // 即使 msg.sender 是恶意合约，在 receive() 中再次调用 refund()\n        // 也会因为 contributions[msg.sender] == 0 而失败（无法重复退款）\n        uint256 amount = contributions[msg.sender];                     // 先取出应退金额\n        contributions[msg.sender] = 0;                                  // ① 先清零\n        totalRaised -= amount;                                          // 退款后同步扣减，保持账目一致\n        (bool success, ) = msg.sender.call{value: amount}(\"\");          // ② 后转账\n        require(success, \"Refund failed\");\n\n        emit Refunded(msg.sender, amount);\n    }\n\n    /**\n     * 检查并更新过期状态\n     */\n    function checkIfExpired() external inState(CampaignState.Fundraising) {\n        require(block.timestamp >= deadline, \"Not expired\");\n        require(totalRaised < goal, \"Goal reached\");\n        state = CampaignState.Expired;\n        emit StateChanged(CampaignState.Expired);\n    }\n\n    function getContributorsCount() external view returns (uint256) {\n        return contributors.length;\n    }\n}\n"
+      },
+      "project/contracts/CrowdfundFactory.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.28;\n\nimport \"./CrowdfundCampaign.sol\";\n\n/**\n * 众筹工厂 — 创建并追踪所有众筹项目\n */\ncontract CrowdfundFactory {\n    CrowdfundCampaign[] public campaigns;\n    \n    mapping(address => uint256[]) public userCampaigns;\n\n    event CampaignCreated(\n        address indexed campaignAddress,\n        address indexed owner,\n        uint256 goal,\n        uint256 deadline\n    );\n\n    function createCampaign(\n        uint256 _goal,\n        uint256 _durationDays,\n        string memory _title,\n        string memory _description,\n        string memory _imageUrl\n    ) external returns (address) {\n        CrowdfundCampaign campaign = new CrowdfundCampaign(\n            msg.sender,\n            _goal,\n            _durationDays,\n            _title,\n            _description,\n            _imageUrl\n        );\n\n        campaigns.push(campaign);\n        userCampaigns[msg.sender].push(campaigns.length - 1);\n\n        emit CampaignCreated(\n            address(campaign),\n            msg.sender,\n            _goal,\n            block.timestamp + (_durationDays * 1 days)\n        );\n\n        return address(campaign);\n    }\n\n    function getCampaignsCount() external view returns (uint256) {\n        return campaigns.length;\n    }\n\n    function getUserCampaigns(address _user) external view returns (uint256[] memory) {\n        return userCampaigns[_user];\n    }\n}\n"
+      }
+    }
+  }
+}

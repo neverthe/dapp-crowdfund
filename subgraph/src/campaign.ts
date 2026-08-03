@@ -52,9 +52,8 @@ export function handleRefunded(event: Refunded): void {
   let campaign = Campaign.load(campaignAddr)
   if (!campaign) return
 
-  // 更新 Campaign 总金额（退款后 totalRaised 不变，但状态可能有变化）
-  // 合约 refund() 不修改 totalRaised，只退还捐赠者的 contribution
-  // 所以我们不做 totalRaised 变更，保留历史记录
+  // 合约 refund() 已同步扣减 totalRaised，这里保持一致，确保子图与链上账目一致
+  campaign.totalRaised = campaign.totalRaised.minus(event.params.amount)
   campaign.save()
 }
 

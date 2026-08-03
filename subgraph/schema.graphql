@@ -1,4 +1,4 @@
-type Campaign @entity {
+type Campaign @entity(immutable: false) {
   id: ID!                          # campaign contract address
   owner: Bytes!
   goal: BigInt!
@@ -25,7 +25,7 @@ type Donation @entity {
   txHash: Bytes!
 }
 
-type CampaignStateChange @entity {
+type CampaignStateChange @entity(immutable: true) {
   id: ID!                          # tx hash + log index
   campaign: Campaign!
   newState: Int!
@@ -33,7 +33,7 @@ type CampaignStateChange @entity {
   txHash: Bytes!
 }
 
-type StakeAction @entity {
+type StakeAction @entity(immutable: true) {
   id: ID!                          # tx hash + log index
   user: Bytes!
   type: StakeType!                 # Stake or Unstake
@@ -42,7 +42,7 @@ type StakeAction @entity {
   txHash: Bytes!
 }
 
-type RewardClaim @entity {
+type RewardClaim @entity(immutable: true) {
   id: ID!                          # tx hash + log index
   user: Bytes!
   amount: BigInt!
@@ -61,7 +61,7 @@ type UserStats @entity {
   stakeCount: Int!
 }
 
-type GlobalStats @entity {
+type GlobalStats @entity(immutable: false) {
   id: ID!                          # "global"
   totalCampaigns: Int!
   totalDonations: Int!
