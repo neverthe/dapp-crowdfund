@@ -1,8 +1,50 @@
 'use client'
 
-import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useReadContract, useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent } from 'wagmi'
+import { useQueryClient } from '@tanstack/react-query'
 import { parseEther } from 'viem'
 import campaignAbi from '@/abis/CrowdfundCampaign.json'
+
+/**
+ * 事件驱动 UI：监听众筹合约的链上事件，事件发生后自动刷新合约数据，
+ * 让进度条/金额/状态实时更新（替代手动轮询）。
+ */
+export function useWatchCampaignEvents(campaignAddress: `0x${string}` | undefined) {
+  const queryClient = useQueryClient()
+  const refresh = () => queryClient.invalidateQueries()
+
+  useWatchContractEvent({
+    address: campaignAddress,
+    abi: campaignAbi.abi,
+    eventName: 'Donated',
+    onLogs: refresh,
+    enabled: !!campaignAddress,
+  })
+
+  useWatchContractEvent({
+    address: campaignAddress,
+    abi: campaignAbi.abi,
+    eventName: 'Withdrawn',
+    onLogs: refresh,
+    enabled: !!campaignAddress,
+  })
+
+  useWatchContractEvent({
+    address: campaignAddress,
+    abi: campaignAbi.abi,
+    eventName: 'Refunded',
+    onLogs: refresh,
+    enabled: !!campaignAddress,
+  })
+
+  useWatchContractEvent({
+    address: campaignAddress,
+    abi: campaignAbi.abi,
+    eventName: 'StateChanged',
+    onLogs: refresh,
+    enabled: !!campaignAddress,
+  })
+}
 
 export function useGetCampaign(address: `0x${string}` | undefined) {
   const { data: owner } = useReadContract({

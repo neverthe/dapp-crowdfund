@@ -5,7 +5,7 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 import { useAccount } from 'wagmi'
 import { useQueryClient } from '@tanstack/react-query'
 import { formatEther } from 'viem'
-import { useGetCampaign, useDonate, useWithdraw, useGetContributions, useGetContributorsCount, useRefund } from '@/hooks/useCampaign'
+import { useGetCampaign, useDonate, useWithdraw, useGetContributions, useGetContributorsCount, useRefund, useWatchCampaignEvents } from '@/hooks/useCampaign'
 import { TxLink, AddressLink } from '@/components/EtherscanLink'
 import { fetchCampaignDonations } from '@/lib/subgraph'
 
@@ -30,6 +30,9 @@ export default function CampaignDetail() {
   const campaign = useGetCampaign(campaignAddress)
   const { data: contribution } = useGetContributions(campaignAddress, address)
   const { data: contributorsCount } = useGetContributorsCount(campaignAddress)
+
+  // 事件驱动：链上发生捐赠/提现/退款/状态变更时，进度条实时刷新
+  useWatchCampaignEvents(campaignAddress)
 
   const { donate, isPending: donatePending, hash: donateHash, isConfirming: isDonateConfirming, isConfirmed: isDonateConfirmed } = useDonate(campaignAddress)
   const { withdraw, isPending: withdrawPending, hash: withdrawHash, isConfirming: isWithdrawConfirming, isConfirmed: isWithdrawConfirmed } = useWithdraw(campaignAddress)
