@@ -3,7 +3,7 @@
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { STAKING_ADDRESS } from '@/lib/wagmi'
 import stakingAbi from '@/abis/StakingPool.json'
-
+// 查询用户质押信息
 export function useStakeInfo(address: `0x${string}` | undefined) {
   const { data, ...rest } = useReadContract({
     address: STAKING_ADDRESS as `0x${string}`,
@@ -15,7 +15,7 @@ export function useStakeInfo(address: `0x${string}` | undefined) {
   })
   return { ...rest, data: data as readonly [bigint, bigint, bigint] | undefined }
 }
-
+//  查询待领取奖励
 export function usePendingReward(address: `0x${string}` | undefined) {
   const { data, ...rest } = useReadContract({
     address: STAKING_ADDRESS as `0x${string}`,
@@ -27,7 +27,7 @@ export function usePendingReward(address: `0x${string}` | undefined) {
   })
   return { ...rest, data: data as bigint | undefined }
 }
-
+//  质押
 export function useStake() {
   const { data: hash, writeContract, isPending, error } = useWriteContract()
 
@@ -43,7 +43,9 @@ export function useStake() {
       args: [amount],
     })
   }
-
+  //组件里 const { stake, isPending } = useStake()
+  // stake(parseEther('100'))  // 质押 100 CROWD
+// stake是上面的const stake函数
   return {
     stake,
     hash,
@@ -53,7 +55,7 @@ export function useStake() {
     error,
   }
 }
-
+// 解锁质押
 export function useUnstake() {
   const { data: hash, writeContract, isPending, error } = useWriteContract()
 
@@ -79,7 +81,7 @@ export function useUnstake() {
     error,
   }
 }
-
+//  领取奖励
 export function useClaimReward() {
   const { data: hash, writeContract, isPending, error } = useWriteContract()
 
@@ -119,7 +121,7 @@ export function useStakingStats() {
     abi: stakingAbi.abi,
     functionName: 'rewardRate',
   })
-
+// 不用 ...rest  有两个独立的查询，状态会冲突
   return { totalStaked: totalStaked as bigint | undefined, rewardRate: rewardRate as bigint | undefined }
 }
 
@@ -145,7 +147,7 @@ export function useApr() {
 
   return { apr, rewardRate: rr }
 }
-
+// 设置奖励率（管理员）
 export function useSetRewardRate() {
   const { data: hash, writeContract, isPending, error } = useWriteContract()
 

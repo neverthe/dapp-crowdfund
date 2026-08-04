@@ -12,7 +12,7 @@ export default function CreateCampaign() {
   const { isConnected } = useAccount()
   const router = useRouter()
   const queryClient = useQueryClient()
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)// ← 文件输入引用
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [goal, setGoal] = useState('')
@@ -21,8 +21,9 @@ export default function CreateCampaign() {
   const [imagePreview, setImagePreview] = useState<string>('')
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState('')
-
+// isPending 交易已发送，等待钱包弹窗确认
   const { createCampaign, isPending, hash, error: contractError } = useCreateCampaign()
+  // isConfirming交易已上链，等待区块确认
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash })
 
   useEffect(() => {
@@ -62,6 +63,7 @@ export default function CreateCampaign() {
       setUploading(true)
       setUploadError('')
       try {
+        // // ← IPFS URL
         imageUrl = await uploadImageToIPFS(imageFile)
       } catch (err: any) {
         setUploadError(err.message || '图片上传失败')

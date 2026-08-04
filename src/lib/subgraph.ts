@@ -1,5 +1,5 @@
 const SUBGRAPH_URL = process.env.NEXT_PUBLIC_SUBGRAPH_URL || ''
-
+// 子图查询工具库，封装了所有 GraphQL 查询函数，为前端提供链上数据的聚合查询能力。
 export async function querySubgraph<T = any>(query: string, variables?: Record<string, any>): Promise<T> {
   const res = await fetch(SUBGRAPH_URL, {
     method: 'POST',

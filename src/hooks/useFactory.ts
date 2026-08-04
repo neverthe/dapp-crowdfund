@@ -3,7 +3,7 @@
 import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { FACTORY_ADDRESS } from '@/lib/wagmi'
 import factoryAbi from '@/abis/CrowdfundFactory.json'
-
+// 查询众筹总数、用户项目，并创建新的众筹。
 export function useFactoryAddress() {
   return FACTORY_ADDRESS
 }

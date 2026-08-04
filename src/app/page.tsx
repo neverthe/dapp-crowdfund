@@ -1,5 +1,5 @@
 'use client'
-
+// 因为使用了 React Hooks 和钱包连接，在客户端渲染
 import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import { formatEther } from 'viem'
@@ -9,9 +9,11 @@ import { fetchGlobalStats } from '@/lib/subgraph'
 
 export default function Home() {
   const { isConnected } = useAccount()
+  // 总捐赠 ETH（单位：wei，字符串格式）。 totalDonatedEth 是 string 因为大数字无法用 JSON 精确表示，后续用 BigInt() 转换
   const [stats, setStats] = useState<{ totalCampaigns: number; totalDonations: number; totalDonatedEth: string } | null>(null)
 
   useEffect(() => {
+    //查询 The Graph 子图， 更新状态
     fetchGlobalStats()
       .then(data => setStats(data.globalStats))
       .catch(() => {})
@@ -64,6 +66,7 @@ export default function Home() {
           </div>
           <div className="bg-[var(--card)] border border-[var(--card-border)] rounded-xl p-5 text-center">
             <p className="text-2xl font-bold text-purple-600">
+              {/* formatEther	viem 工具：将 wei 转换为 ETH（除以 10^18）toFixed(4)保留 4 位小数 */}
               {Number(formatEther(BigInt(stats.totalDonatedEth))).toFixed(4)}
             </p>
             <p className="text-sm text-[var(--muted-foreground)] mt-1">总捐赠 ETH</p>

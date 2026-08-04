@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { fetchCampaignsFromSubgraph, fetchUserCampaignsFromSubgraph } from '@/lib/subgraph'
-
+// 首页显示所有众筹 和  首页显示所有众筹 数据
+// 众筹列表需要轮询（需要 Hook），其他的直接调用 lib/subgraph.ts里的函数只需要加载一次
 export interface SubgraphCampaign {
   id: string
   owner: string

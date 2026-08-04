@@ -1,13 +1,13 @@
 'use client'
 
-import { useParams } from 'next/navigation'
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useParams } from 'next/navigation'//获取 URL 参数（众筹地址）
+import { useState, useMemo, useEffect, useRef } from 'react'//useMemo缓存计算结果，useRef保存可变值（不触发重新渲染）
 import { useAccount } from 'wagmi'
 import { useQueryClient } from '@tanstack/react-query'
 import { formatEther } from 'viem'
 import { useGetCampaign, useDonate, useWithdraw, useGetContributions, useGetContributorsCount, useRefund, useWatchCampaignEvents } from '@/hooks/useCampaign'
-import { TxLink, AddressLink } from '@/components/EtherscanLink'
-import { fetchCampaignDonations } from '@/lib/subgraph'
+import { TxLink, AddressLink } from '@/components/EtherscanLink'//	区块浏览器链接组件
+import { fetchCampaignDonations } from '@/lib/subgraph'//从子图查询捐款记录
 
 const STATE_MAP: Record<number, { label: string; color: string; bg: string }> = {
   0: { label: '募集中', color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -18,6 +18,7 @@ const STATE_MAP: Record<number, { label: string; color: string; bg: string }> = 
 
 export default function CampaignDetail() {
   const params = useParams()
+  // ← 从 URL 获取合约地址   列表页跳转时： href={`/campaign/${campaign.id}`}   campaign.id 是 子图返回的众筹合约地址
   const campaignAddress = params.id as `0x${string}`
   const { address, isConnected } = useAccount()
   const queryClient = useQueryClient()
@@ -25,15 +26,15 @@ export default function CampaignDetail() {
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string; txHash?: `0x${string}` } | null>(null)
   const [donations, setDonations] = useState<any[]>([])
   const [donationsLoading, setDonationsLoading] = useState(true)
-  const donationsFirstLoad = useRef(true)
+  const donationsFirstLoad = useRef(true) // ← 区分首次加载和刷新
 
-  const campaign = useGetCampaign(campaignAddress)
-  const { data: contribution } = useGetContributions(campaignAddress, address)
+  const campaign = useGetCampaign(campaignAddress)//从合约读取数据 基本信息
+  const { data: contribution } = useGetContributions(campaignAddress, address)// 我的捐赠
   const { data: contributorsCount } = useGetContributorsCount(campaignAddress)
 
   // 事件驱动：链上发生捐赠/提现/退款/状态变更时，进度条实时刷新
   useWatchCampaignEvents(campaignAddress)
-
+ // 合约交互 Hooks
   const { donate, isPending: donatePending, hash: donateHash, isConfirming: isDonateConfirming, isConfirmed: isDonateConfirmed } = useDonate(campaignAddress)
   const { withdraw, isPending: withdrawPending, hash: withdrawHash, isConfirming: isWithdrawConfirming, isConfirmed: isWithdrawConfirmed } = useWithdraw(campaignAddress)
   const { refund, isPending: refundPending, hash: refundHash, isConfirming: isRefundConfirming, isConfirmed: isRefundConfirmed } = useRefund(campaignAddress)
@@ -91,6 +92,7 @@ export default function CampaignDetail() {
 
   const { goal, totalRaised, deadline, owner, state, title, description, imageUrl } = campaign
 
+  // useMemo 的作用： 只在依赖变化时重新计算，避免每次渲染都重复计算
   const stats = useMemo(() => {
     if (goal === undefined || totalRaised === undefined || deadline === undefined || state === undefined) return null
     const goalEth = formatEther(goal)
@@ -104,6 +106,7 @@ export default function CampaignDetail() {
     return { goalEth, raisedEth, progress, daysLeft, stateInfo, isPastDeadline }
   }, [goal, totalRaised, deadline, state])
 
+  // 加载状态（骨架屏）
   if (!stats) {
     return (
       <div className="max-w-6xl mx-auto animate-pulse">

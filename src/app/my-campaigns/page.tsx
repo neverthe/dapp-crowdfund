@@ -74,6 +74,7 @@ export default function MyCampaignsPage() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold mb-8">我的众筹</h1>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* 显示 3 个占位卡片，animate-pulse 实现呼吸动画，提升用户体验（减少白屏等待感） */}
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-white rounded-xl shadow-sm border p-5 h-48 animate-pulse">
               <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />

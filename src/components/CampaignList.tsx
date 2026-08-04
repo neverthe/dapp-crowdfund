@@ -13,7 +13,7 @@ function getStateInfo(state: number) {
     default: return { label: '未知', color: 'text-gray-600', bg: 'bg-gray-100' }
   }
 }
-
+//每个 CampaignCard卡片
 function CampaignCard({ campaign }: { campaign: SubgraphCampaign }) {
   const goal = BigInt(campaign.goal)
   const totalRaised = BigInt(campaign.totalRaised)
@@ -76,8 +76,9 @@ function CampaignCard({ campaign }: { campaign: SubgraphCampaign }) {
 }
 
 export default function CampaignList() {
+  //从子图获取所有众筹数据
   const { campaigns, loading, error } = useSubgraphCampaigns()
-
+//加载状态（骨架屏）
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

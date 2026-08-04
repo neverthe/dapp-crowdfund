@@ -45,6 +45,7 @@ export default function ActivityPage() {
 
   useEffect(() => {
     setLoading(true)
+    // 三个子图查询并行执行,合并所有数据,统一格式化为 ActivityItem
     Promise.all([
       fetchDonations().catch(() => ({ donations: [] })),
       fetchStakeActions().catch(() => ({ stakeActions: [] })),
@@ -78,6 +79,7 @@ export default function ActivityPage() {
           txHash: r.txHash,
         })),
       ]
+        // 按时间排序（最新的在前）
       list.sort((a, b) => Number(b.timestamp - a.timestamp))
       setItems(list)
       setLoading(false)

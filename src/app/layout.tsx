@@ -19,6 +19,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       <body className="min-h-screen bg-[var(--background)] text-[var(--foreground)] antialiased font-sans">
+       {/* Providers：全局状态提供者（钱包、主题等） ChainGuard：包裹所有内容，确保在正确网络上 */}
         <Providers>
           <ChainGuard>
             <Header />

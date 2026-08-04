@@ -13,18 +13,18 @@ export default function StakePage() {
   const [stakeAmount, setStakeAmount] = useState('')
   const [unstakeAmount, setUnstakeAmount] = useState('')
 
-  const { apr } = useApr()
+  const { apr } = useApr()// 当前 APR
   const { totalStaked } = useStakingStats()
   const { data: stakeInfo } = useStakeInfo(address)
-  const { data: pendingReward } = usePendingReward(address)
+  const { data: pendingReward } = usePendingReward(address)// 待领取奖励
 
   const { data: tokenBalance } = useTokenBalance(address)
-  const { data: allowance } = useTokenAllowance(address, CONTRACT_CONFIG.stakingAddress as `0x${string}`)
-  const { approve, isPending: approvePending, hash: approveHash } = useApproveToken(CONTRACT_CONFIG.stakingAddress as `0x${string}`)
+  const { data: allowance } = useTokenAllowance(address, CONTRACT_CONFIG.stakingAddress as `0x${string}`) // 授权额度
+  const { approve, isPending: approvePending, hash: approveHash } = useApproveToken(CONTRACT_CONFIG.stakingAddress as `0x${string}`)// 授权操作
 
   const { stake, isPending: stakePending, hash: stakeHash } = useStake()
   const { unstake, isPending: unstakePending, hash: unstakeHash } = useUnstake()
-  const { claimReward, isPending: claimPending, hash: claimHash } = useClaimReward()
+  const { claimReward, isPending: claimPending, hash: claimHash } = useClaimReward()// 领取奖励操作
 
   const tokenOwner = useTokenOwner()
   const { mint, isPending: mintPending, hash: mintHash, isConfirming: isMintConfirming, isConfirmed: isMintConfirmed } = useMintToken()
@@ -33,7 +33,7 @@ export default function StakePage() {
   const isOwner = !!address && !!tokenOwner && address.toLowerCase() === tokenOwner.toLowerCase()
 
   const [customApr, setCustomApr] = useState('100')
-
+// 监听每个交易是否被链上确认，更新 UI 状态。
   const { isLoading: isApproveConfirming, isSuccess: isApproveSuccess } =
     useWaitForTransactionReceipt({ hash: approveHash })
   const { isLoading: isStakeConfirming, isSuccess: isStakeSuccess } =
@@ -44,9 +44,10 @@ export default function StakePage() {
     useWaitForTransactionReceipt({ hash: claimHash })
 
   // 交易确认后自动刷新数据
+  // useReadContract 内部会自动生成 queryKey，基于address，functionName，args，chainId
   useEffect(() => {
     if (isApproveSuccess || isStakeSuccess || isUnstakeSuccess || isClaimSuccess || isMintConfirmed || isSetRateConfirmed) {
-      queryClient.invalidateQueries()
+      queryClient.invalidateQueries() // ← 不带参数时，刷新所有 React Query 缓存
     }
   }, [isApproveSuccess, isStakeSuccess, isUnstakeSuccess, isClaimSuccess, isMintConfirmed, isSetRateConfirmed, queryClient])
 
@@ -58,6 +59,7 @@ export default function StakePage() {
     mintPending || isMintConfirming ||
     setRatePending
 
+    // 如果授权额度 < 需要质押的数量 → 需要授权
   const stakedAmount = stakeInfo?.[0] || 0n
   const needApproval = allowance !== undefined && allowance < (stakeAmount ? parseEther(stakeAmount) : 0n)
 
@@ -135,6 +137,8 @@ export default function StakePage() {
             />
             {needApproval ? (
               <button
+              // maxUint256 就是"全量授权"——授权一次，之后质押任何数量都不用再授权
+              // 只有当你授权额度 < 本次质押金额时，前端才会再弹授权按钮）。
                 onClick={() => approve(maxUint256)}
                 disabled={isProcessing || !stakeAmount || parseFloat(stakeAmount) <= 0}
                 className="px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed"

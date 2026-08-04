@@ -25,7 +25,7 @@ export function useTokenAllowance(owner: `0x${string}` | undefined, spender: `0x
 
     abi: tokenAbi.abi,
     functionName: 'allowance',
-    args: [owner, spender],
+    args: [owner, spender],//查询 owner 授权给 spender 的额度
     query: { enabled: !!owner && !!spender },
     refetchInterval: 8000,
   })
@@ -43,6 +43,7 @@ export function useApproveToken(spender: `0x${string}`) {
       address: TOKEN_ADDRESS as `0x${string}`,
 
       abi: tokenAbi.abi,
+      // 继承ERC20.sol里的函数
       functionName: 'approve',
       args: [spender, amount],
     })
@@ -91,7 +92,7 @@ export function useTokenOwner() {
   })
   return data as `0x${string}` | undefined
 }
-
+//  一次返回所有需要的东西。封装，可复用可维护，方便使用，简化调用
 export function useMintToken() {
   const { data: hash, writeContract, isPending, error } = useWriteContract()
 
