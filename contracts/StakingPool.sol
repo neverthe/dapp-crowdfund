@@ -10,14 +10,15 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
  * 简化版：固定年化收益率，按质押时长计算奖励
  */
 contract StakingPool is Ownable, ReentrancyGuard {
-    IERC20 public stakingToken;
-    uint256 public rewardRate;       // 每秒每个代币的奖励（精度 1e18）
+
+    IERC20 public stakingToken;    // IERC20 是接口类型，可以适配任何 ERC20 代币
+    uint256 public rewardRate;       // 奖励速率：每秒每个代币的奖励（精度 1e18）
     uint256 public totalStaked;
     
     struct StakeInfo {
         uint256 amount;
         uint256 since;               // 质押开始时间
-        uint256 rewardDebt;          // 已结算的奖励债务
+        uint256 rewardDebt;          // 已累积但未领取的奖励
     }
 
     mapping(address => StakeInfo) public stakes;
@@ -35,24 +36,26 @@ contract StakingPool is Ownable, ReentrancyGuard {
     /**
      * 质押代币
      */
+    //  nonReentrant: 防止重入攻击
     function stake(uint256 _amount) external nonReentrant {
         require(_amount > 0, "Amount must be > 0");
 
         // 先结算已有奖励
         _claimReward();
-
+    // 从用户转 CROWD代币数量 到合约
         stakingToken.transferFrom(msg.sender, address(this), _amount);
         stakes[msg.sender].amount += _amount;
         stakes[msg.sender].since = block.timestamp;
         totalStaked += _amount;
 
-        emit Staked(msg.sender, _amount);
+        emit Staked(msg.sender, _amount);//触发 Staked 事件
     }
 
     /**
      * 提取质押 + 奖励
      */
     function unstake(uint256 _amount) external nonReentrant {
+        // 检查用户的质押量是否足够
         StakeInfo storage s = stakes[msg.sender];
         require(s.amount >= _amount, "Insufficient staked");
 
@@ -75,23 +78,25 @@ contract StakingPool is Ownable, ReentrancyGuard {
     /**
      * 查询待领取奖励
      */
+    //  待领取奖励 = (质押量 × 奖励速率 × 质押时长) + 已累积未领取的奖励
     function pendingReward(address _user) public view returns (uint256) {
         StakeInfo storage s = stakes[_user];
         if (s.amount == 0) return 0;
         uint256 duration = block.timestamp - s.since;
         return (s.amount * rewardRate * duration) / 1e18 + s.rewardDebt;
     }
-
+    // 领取奖励函数
     function _claimReward() internal {
         uint256 reward = pendingReward(msg.sender);
         if (reward > 0) {
+            //把累积奖励转给用户了 债务清零，下次从 0 开始累积
             stakes[msg.sender].rewardDebt = 0;
             stakes[msg.sender].since = block.timestamp;
             stakingToken.transfer(msg.sender, reward);
             emit RewardsClaimed(msg.sender, reward);
         }
     }
-
+    // 仅 owner 可调用（项目方）调整 APR（年化收益率）
     function setRewardRate(uint256 _aprPercent) external onlyOwner {
         rewardRate = (_aprPercent * 1e18) / 100 / 365 days;
     }
