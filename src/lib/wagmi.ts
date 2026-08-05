@@ -23,7 +23,7 @@ export const config = createConfig({
     metaMask({
       dappMetadata: {
         name: 'Crowdfund DApp',
-        url: 'http://localhost:3000',
+        url: 'http://173.254.234.4:8080',
       },
     }),
     walletConnect({ projectId: 'e618174c67748f7b65e9d54b89ed2741' }),
