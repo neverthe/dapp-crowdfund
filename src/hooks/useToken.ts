@@ -12,9 +12,11 @@ export function useTokenBalance(address: `0x${string}` | undefined) {
     abi: tokenAbi.abi,
     functionName: 'balanceOf',
     args: [address],
-    query: { enabled: !!address },
-    // 轮询自动刷新，铸造/质押后余额自动更新
-    refetchInterval: 8000,
+    query: {
+      enabled: !!address,
+      // 轮询自动刷新，铸造/质押后余额自动更新
+      refetchInterval: 8000,
+    },
   })
   return { ...rest, data: data as bigint | undefined }
 }
@@ -26,8 +28,10 @@ export function useTokenAllowance(owner: `0x${string}` | undefined, spender: `0x
     abi: tokenAbi.abi,
     functionName: 'allowance',
     args: [owner, spender],//查询 owner 授权给 spender 的额度
-    query: { enabled: !!owner && !!spender },
-    refetchInterval: 8000,
+    query: {
+      enabled: !!owner && !!spender,
+      refetchInterval: 8000,
+    },
   })
   return { ...rest, data: data as bigint | undefined }
 }

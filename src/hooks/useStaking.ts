@@ -130,8 +130,10 @@ export function useApr() {
     address: STAKING_ADDRESS as `0x${string}`,
     abi: stakingAbi.abi,
     functionName: 'rewardRate',
-    // 轮询自动刷新，避免依赖交易确认时机导致 APR 显示滞后
-    refetchInterval: 8000,
+    query: {
+      // 轮询自动刷新，避免依赖交易确认时机导致 APR 显示滞后
+      refetchInterval: 8000,
+    },
   })
 
   const rr = rewardRate as bigint | undefined
