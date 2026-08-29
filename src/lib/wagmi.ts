@@ -9,10 +9,10 @@ const TOKEN_ADDRESS = process.env.NEXT_PUBLIC_CROWD_TOKEN || '0x'
 const STAKING_ADDRESS = process.env.NEXT_PUBLIC_STAKING_POOL || '0x'
 
 // Base 主网 RPC 列表（自定义优先，公共 RPC 做备选）
+// 注意：base.llamarpc.com 已宕机（521 返回 HTML 错误页），会导致 unknown RPC error，已移除
 const baseRpcUrls = [
   process.env.NEXT_PUBLIC_BASE_RPC_URL,
   'https://mainnet.base.org',
-  'https://base.llamarpc.com',
   'https://base-rpc.publicnode.com',
   'https://1rpc.io/base',
 ].filter(Boolean) as string[]
