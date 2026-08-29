@@ -8,11 +8,11 @@ dataSources:
   # ── 众筹工厂 ──
   - kind: ethereum
     name: CrowdfundFactory
-    network: sepolia
+    network: base
     source:
-      address: "0x8fe3846c7227c45d4b893be3b3c07e9de971a4cd"
+      address: "0xa3445bf9fd39e1e24a71b8e94584f02ad3fa382f"
       abi: CrowdfundFactory
-      startBlock: 11409458
+      startBlock: 50602945
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -34,11 +34,11 @@ dataSources:
   # ── Staking 池 ──
   - kind: ethereum
     name: StakingPool
-    network: sepolia
+    network: base
     source:
-      address: "0x385c8bb028dc3582ebc8b4f72532da2dfcce68e1"
+      address: "0x107ee1ea47b4b75107692330ff28f5c296d5cfb0"
       abi: StakingPool
-      startBlock: 11409458
+      startBlock: 50602991
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.9
@@ -64,7 +64,7 @@ templates:
   # ── 动态创建的 Campaign 合约 ──
   - kind: ethereum
     name: CrowdfundCampaign
-    network: sepolia
+    network: base
     source:
       abi: CrowdfundCampaign
     mapping:

@@ -2,7 +2,7 @@
 
 一个基于以太坊的去中心化众筹 + 质押挖矿一体化 DApp。用户用 MetaMask / WalletConnect 连接钱包，创建众筹项目、用 ETH 捐赠、目标达成后创建者提现、过期未达标可退款；同时支持质押项目代币 CROWD 赚取 APR 收益。**没有后端服务器和数据库**——所有业务数据都在链上，前端通过 The Graph 子图索引查询链上数据。
 
-已部署到 **Sepolia 测试网**，合约地址和子图链接见下文。
+已部署到 **Base 主网**，合约地址和子图链接见下文。
 
 ## 功能特性
 
@@ -24,7 +24,7 @@
 - **链上交互**：wagmi v3 + viem v2（useReadContract / useWriteContract / useWaitForTransactionReceipt / useWatchContractEvent）
 - **状态管理**：@tanstack/react-query（缓存 + 轮询兜底）
 - **合约**：Solidity ^0.8.28 + Hardhat + OpenZeppelin
-- **数据索引**：The Graph（Subgraph Studio，Sepolia）
+- **数据索引**：The Graph（Subgraph Studio，Base）
 - **存储**：IPFS + Pinata（图片内容存 IPFS，链上只存 CID 索引）
 - **钱包**：MetaMask + WalletConnect
 
@@ -47,16 +47,16 @@
 
 **子图索引**：链上事件 → 可查询实体（`Campaign`、`Donation`、`StakeAction`、`RewardClaim`、`GlobalStats`、`UserStats`），前端用 GraphQL 一次拿到聚合统计与历史记录。
 
-## 已部署地址（Sepolia 测试网）
+## 已部署地址（Base 主网）
 
 | 合约 | 地址 |
 |---|---|
-| CrowdToken (ERC20) | `0xeca866861030cf9e5c717675024d3fb770576fe9` |
-| CrowdfundFactory | `0x8fe3846c7227c45d4b893be3b3c07e9de971a4cd` |
-| StakingPool | `0x385c8bb028dc3582ebc8b4f72532da2dfcce68e1` |
+| CrowdToken (ERC20) | `0x...` |
+| CrowdfundFactory | `0x...` |
+| StakingPool | `0x...` |
 
-- 子图：[crowdfund-staking-sepolia v0.0.4](https://api.studio.thegraph.com/query/1757085/crowdfund-staking-sepolia/v0.0.4)
-- 可在 [Sepolia Etherscan](https://sepolia.etherscan.io/) 输入合约地址查看链上数据
+- 子图：[crowdfund-staking-base](https://api.studio.thegraph.com/query/YOUR_SUBGRAPH_ID/crowdfund-staking-base/v0.0.1)
+- 可在 [Basescan](https://basescan.org/) 输入合约地址查看链上数据
 
 ## 快速开始
 
@@ -76,14 +76,15 @@ npm run dev
 
 | 变量 | 说明 |
 |---|---|
-| `NEXT_PUBLIC_NETWORK` | 网络，`sepolia` |
-| `NEXT_PUBLIC_SEPOLIA_RPC_URL` | Sepolia RPC 节点 |
+| `NEXT_PUBLIC_NETWORK` | 网络，`base` |
+| `NEXT_PUBLIC_BASE_RPC_URL` | Base 主网 RPC 节点 |
 | `NEXT_PUBLIC_CROWD_TOKEN` | CROWD 代币合约地址 |
 | `NEXT_PUBLIC_FACTORY` | 众筹工厂合约地址 |
 | `NEXT_PUBLIC_STAKING_POOL` | 质押池合约地址 |
 | `NEXT_PUBLIC_SUBGRAPH_URL` | 子图 GraphQL 端点 |
 | `NEXT_PUBLIC_PINATA_JWT` | Pinata API Key（用于图片上传到 IPFS） |
 | `DEPLOYER_PRIVATE_KEY` | 仅用于 Hardhat 部署脚本，前端不需要 |
+| `ETHERSCAN_API_KEY` | Basescan 验证 API Key（合约开源验证用） |
 
 ## 子图部署（可选）
 

@@ -15,7 +15,7 @@ type Campaign @entity(immutable: false) {
   donationCount: Int!
 }
 
-type Donation @entity {
+type Donation @entity(immutable: true) {
   id: ID!                          # tx hash + log index
   campaign: Campaign!
   donor: Bytes!
@@ -50,7 +50,7 @@ type RewardClaim @entity(immutable: true) {
   txHash: Bytes!
 }
 
-type UserStats @entity {
+type UserStats @entity(immutable: false) {
   id: ID!                          # user address
   totalDonated: BigInt!
   totalStaked: BigInt!

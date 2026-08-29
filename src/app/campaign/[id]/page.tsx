@@ -298,7 +298,7 @@ export default function CampaignDetail() {
                       <div className="text-right shrink-0">
                         <p className="text-sm font-bold text-indigo-600">{formatEther(BigInt(d.amount))} ETH</p>
                         <a
-                          href={`https://sepolia.etherscan.io/tx/${d.txHash}`}
+                          href={`https://basescan.org/tx/${d.txHash}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-xs text-gray-400 hover:text-indigo-600"

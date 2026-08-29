@@ -151,7 +151,7 @@ export default function ActivityPage() {
 
 function ActivityRow({ item }: { item: ActivityItem }) {
   const meta = TYPE_META[item.type]
-  const etherscanUrl = `https://sepolia.etherscan.io/tx/${item.txHash}`
+  const etherscanUrl = `https://basescan.org/tx/${item.txHash}`
 
   return (
     <a

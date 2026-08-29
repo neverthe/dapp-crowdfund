@@ -1,8 +1,6 @@
 'use client'
 
-import { sepolia } from 'wagmi/chains'
-
-const ETHERSCAN_BASE = 'https://sepolia.etherscan.io'
+const ETHERSCAN_BASE = 'https://basescan.org'
 
 export function TxLink({ hash, label }: { hash: `0x${string}`; label?: string }) {
   return (
