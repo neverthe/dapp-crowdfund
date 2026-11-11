@@ -49,7 +49,7 @@ function CampaignCard({ campaign }: { campaign: SubgraphCampaign }) {
         </div>
 
         <div className="flex justify-between text-xs text-gray-400">
-          <span>{campaign.donationCount} 位捐赠者</span>
+          <span>{campaign.donorCount} 位捐赠者</span>
           <span>{daysLeft > 0 ? `${daysLeft} 天剩余` : '已截止'}</span>
         </div>
       </div>

@@ -67,7 +67,7 @@ function CampaignCard({ campaign }: { campaign: SubgraphCampaign }) {
           </div>
         </div>
         <div className="flex justify-between text-xs text-gray-400">
-          <span>{campaign.donationCount} 位捐赠者</span>
+          <span>{campaign.donorCount} 位捐赠者</span>
           <span>{daysLeft > 0 ? `${daysLeft} 天剩余` : '已截止'}</span>
         </div>
       </div>
@@ -78,6 +78,7 @@ function CampaignCard({ campaign }: { campaign: SubgraphCampaign }) {
 export default function CampaignList() {
   //从子图获取所有众筹数据
   const { campaigns, loading, error } = useSubgraphCampaigns()
+
 //加载状态（骨架屏）
   if (loading) {
     return (

@@ -15,6 +15,7 @@ export interface SubgraphCampaign {
   description: string | null
   imageUrl: string | null
   donationCount: number
+  donorCount: number // 去重后的捐赠人数
 }
 
 export function useSubgraphCampaigns() {

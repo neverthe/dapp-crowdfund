@@ -1,13 +1,19 @@
 'use client'
 
 import { useParams } from 'next/navigation'//获取 URL 参数（众筹地址）
-import { useState, useMemo, useEffect, useRef } from 'react'//useMemo缓存计算结果，useRef保存可变值（不触发重新渲染）
+import { useState, useMemo, useEffect } from 'react'//useMemo缓存计算结果
 import { useAccount } from 'wagmi'
 import { useQueryClient } from '@tanstack/react-query'
 import { formatEther } from 'viem'
 import { useGetCampaign, useDonate, useWithdraw, useGetContributions, useGetContributorsCount, useRefund, useWatchCampaignEvents } from '@/hooks/useCampaign'
 import { TxLink, AddressLink } from '@/components/EtherscanLink'//	区块浏览器链接组件
 import { fetchCampaignDonations } from '@/lib/subgraph'//从子图查询捐款记录
+
+// 把 wagmi/viem 的错误转成可读文案：短消息优先，其次完整 message
+function errorText(e: unknown): string {
+  const err = e as { shortMessage?: string; message?: string } | null | undefined
+  return err?.shortMessage || err?.message || '未知错误'
+}
 
 const STATE_MAP: Record<number, { label: string; color: string; bg: string }> = {
   0: { label: '募集中', color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -26,7 +32,6 @@ export default function CampaignDetail() {
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string; txHash?: `0x${string}` } | null>(null)
   const [donations, setDonations] = useState<any[]>([])
   const [donationsLoading, setDonationsLoading] = useState(true)
-  const donationsFirstLoad = useRef(true) // ← 区分首次加载和刷新
 
   const campaign = useGetCampaign(campaignAddress)//从合约读取数据 基本信息
   const { data: contribution } = useGetContributions(campaignAddress, address)// 我的捐赠
@@ -35,29 +40,45 @@ export default function CampaignDetail() {
   // 事件驱动：链上发生捐赠/提现/退款/状态变更时，进度条实时刷新
   useWatchCampaignEvents(campaignAddress)
  // 合约交互 Hooks
-  const { donate, isPending: donatePending, hash: donateHash, isConfirming: isDonateConfirming, isConfirmed: isDonateConfirmed } = useDonate(campaignAddress)
-  const { withdraw, isPending: withdrawPending, hash: withdrawHash, isConfirming: isWithdrawConfirming, isConfirmed: isWithdrawConfirmed } = useWithdraw(campaignAddress)
-  const { refund, isPending: refundPending, hash: refundHash, isConfirming: isRefundConfirming, isConfirmed: isRefundConfirmed } = useRefund(campaignAddress)
+  const { donate, isPending: donatePending, hash: donateHash, isConfirming: isDonateConfirming, isConfirmed: isDonateConfirmed, error: donateError } = useDonate(campaignAddress)
+  const { withdraw, isPending: withdrawPending, hash: withdrawHash, isConfirming: isWithdrawConfirming, isConfirmed: isWithdrawConfirmed, error: withdrawError } = useWithdraw(campaignAddress)
+  const { refund, isPending: refundPending, hash: refundHash, isConfirming: isRefundConfirming, isConfirmed: isRefundConfirmed, error: refundError } = useRefund(campaignAddress)
 
-  // 加载该众筹的捐款记录（来自子图）；捐赠/退款确认后子图索引有延迟，稍等再重新拉取
+  // 加载该众筹的捐款记录（来自子图）。
+  // 子图索引有延迟：捐赠/退款确认后每 3 秒轮询一次，直到新交易出现在列表里（最多约 2 分钟）
   useEffect(() => {
     let cancelled = false
     let timer: ReturnType<typeof setTimeout> | undefined
-    const load = () => {
-      setDonationsLoading(true)
-      fetchCampaignDonations(campaignAddress)
-        .then(data => { if (!cancelled) setDonations(data.donations || []) })
-        .catch(() => { if (!cancelled) setDonations([]) })
-        .finally(() => { if (!cancelled) setDonationsLoading(false) })
+    let attempts = 0
+    const pendingTxHashes = [
+      isDonateConfirmed && donateHash ? donateHash.toLowerCase() : null,
+      isRefundConfirmed && refundHash ? refundHash.toLowerCase() : null,
+    ].filter(Boolean) as string[]
+
+    const load = async () => {
+      if (attempts === 0) setDonationsLoading(true)
+      try {
+        const data = await fetchCampaignDonations(campaignAddress)
+        if (cancelled) return
+        const list = data.donations || []
+        setDonations(list)
+        const indexed =
+          pendingTxHashes.length > 0 &&
+          pendingTxHashes.every(h => list.some((d: any) => d.txHash?.toLowerCase() === h))
+        if (pendingTxHashes.length > 0 && !indexed && attempts < 40) {
+          attempts += 1
+          timer = setTimeout(load, 3000)
+        }
+      } catch {
+        if (!cancelled) setDonations([])
+      } finally {
+        if (!cancelled) setDonationsLoading(false)
+      }
     }
-    if (donationsFirstLoad.current) {
-      donationsFirstLoad.current = false
-      load()
-    } else {
-      timer = setTimeout(load, 3000)
-    }
+
+    load()
     return () => { cancelled = true; if (timer) clearTimeout(timer) }
-  }, [campaignAddress, isDonateConfirmed, isRefundConfirmed])
+  }, [campaignAddress, isDonateConfirmed, isRefundConfirmed, donateHash, refundHash])
 
   // 交易确认后自动刷新 + Toast
   useEffect(() => {
@@ -80,6 +101,19 @@ export default function CampaignDetail() {
       setToast({ type: 'success', msg: '退款成功！', txHash: refundHash })
     }
   }, [isRefundConfirmed, queryClient, refundHash])
+
+  // 交易失败必须让用户看见，否则点击后「毫无反应」
+  useEffect(() => {
+    if (donateError) setToast({ type: 'error', msg: `捐赠失败：${errorText(donateError)}` })
+  }, [donateError])
+
+  useEffect(() => {
+    if (withdrawError) setToast({ type: 'error', msg: `提现失败：${errorText(withdrawError)}` })
+  }, [withdrawError])
+
+  useEffect(() => {
+    if (refundError) setToast({ type: 'error', msg: `退款失败：${errorText(refundError)}` })
+  }, [refundError])
 
   // 自动清除 Toast
   useEffect(() => {
@@ -229,8 +263,11 @@ export default function CampaignDetail() {
                   disabled={isProcessing || !donationAmount || parseFloat(donationAmount) <= 0}
                   className="w-full py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {donatePending ? '钱包确认中...' : isDonateConfirming ? '交易确认中...' : '确认捐赠'}
+                  {donatePending ? '请在钱包中确认...' : isDonateConfirming ? '交易确认中...' : '确认捐赠'}
                 </button>
+                {donateError && (
+                  <p className="text-xs text-red-500 break-words">捐赠失败：{errorText(donateError)}</p>
+                )}
               </>
             )}
 

@@ -1,15 +1,15 @@
 'use client'
 
-import { useAccount, useSwitchChain, useChainId } from 'wagmi'
+import { useAccount, useSwitchChain } from 'wagmi'
 import { base } from 'wagmi/chains'
-import { useEffect } from 'react'
 
 export function ChainGuard({ children }: { children: React.ReactNode }) {
-  const { isConnected } = useAccount()
-  const chainId = useChainId()
+  // 必须用 useAccount 里的 chainId（钱包真实所在链）。
+  // useChainId() 在钱包切到未配置的链时会停留在默认链，检测不到「网络不对」。
+  const { isConnected, chainId } = useAccount()
   const { switchChain } = useSwitchChain()
 
-  const isWrongNetwork = isConnected && chainId !== base.id
+  const isWrongNetwork = isConnected && chainId !== undefined && chainId !== base.id
 
   if (!isWrongNetwork) return <>{children}</>
 

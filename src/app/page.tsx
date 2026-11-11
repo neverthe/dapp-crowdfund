@@ -1,23 +1,24 @@
 'use client'
 // 因为使用了 React Hooks 和钱包连接，在客户端渲染
-import { useState, useEffect } from 'react'
 import { useAccount } from 'wagmi'
 import { formatEther } from 'viem'
 import { ConnectButton } from '@/components/ConnectButton'
 import CampaignList from '@/components/CampaignList'
-import { fetchGlobalStats } from '@/lib/subgraph'
+import { useSubgraphCampaigns } from '@/hooks/useSubgraphCampaigns'
 
 export default function Home() {
   const { isConnected } = useAccount()
-  // 总捐赠 ETH（单位：wei，字符串格式）。 totalDonatedEth 是 string 因为大数字无法用 JSON 精确表示，后续用 BigInt() 转换
-  const [stats, setStats] = useState<{ totalCampaigns: number; totalDonations: number; totalDonatedEth: string } | null>(null)
 
-  useEffect(() => {
-    //查询 The Graph 子图， 更新状态
-    fetchGlobalStats()
-      .then(data => setStats(data.globalStats))
-      .catch(() => {})
-  }, [])
+  // 统计只基于白名单里的真实项目聚合，避免把测试假数据算进来
+  const { campaigns, loading: campaignsLoading } = useSubgraphCampaigns()
+  const activeCampaigns = campaigns.filter(c => {
+    const deadlineMs = Number(BigInt(c.deadline)) * 1000
+    const isPast = deadlineMs > 0 && Date.now() > deadlineMs
+    return c.state === 0 && !isPast
+  })
+  const activeCount = activeCampaigns.length
+  const totalDonations = campaigns.reduce((sum, c) => sum + (c.donationCount || 0), 0)
+  const totalDonatedEth = formatEther(campaigns.reduce((sum, c) => sum + BigInt(c.totalRaised || '0'), 0n))
 
   return (
     <div>
@@ -54,20 +55,20 @@ export default function Home() {
       </div>
 
       {/* 仪表盘统计 */}
-      {stats && (
+      {!campaignsLoading && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
           <div className="bg-[var(--card)] border border-[var(--card-border)] rounded-xl p-5 text-center">
-            <p className="text-2xl font-bold text-indigo-600">{stats.totalCampaigns}</p>
-            <p className="text-sm text-[var(--muted-foreground)] mt-1">总众筹项目</p>
+            <p className="text-2xl font-bold text-indigo-600">{activeCount}</p>
+            <p className="text-sm text-[var(--muted-foreground)] mt-1">进行中的众筹</p>
           </div>
           <div className="bg-[var(--card)] border border-[var(--card-border)] rounded-xl p-5 text-center">
-            <p className="text-2xl font-bold text-green-600">{stats.totalDonations}</p>
+            <p className="text-2xl font-bold text-green-600">{totalDonations}</p>
             <p className="text-sm text-[var(--muted-foreground)] mt-1">总捐赠次数</p>
           </div>
           <div className="bg-[var(--card)] border border-[var(--card-border)] rounded-xl p-5 text-center">
             <p className="text-2xl font-bold text-purple-600">
               {/* formatEther	viem 工具：将 wei 转换为 ETH（除以 10^18）toFixed(4)保留 4 位小数 */}
-              {Number(formatEther(BigInt(stats.totalDonatedEth))).toFixed(4)}
+              {Number(totalDonatedEth).toFixed(4)}
             </p>
             <p className="text-sm text-[var(--muted-foreground)] mt-1">总捐赠 ETH</p>
           </div>
